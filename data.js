@@ -1,6 +1,8 @@
 const MQTT_BROKER = "ws://192.168.1.102:9001";  
 const MQTT_TOPIC = "rtls_db/ubicaciones";
 
+let qualityThreshold = 50; // Valor inicial de calidad (puedes ajustarlo desde el control deslizante)
+
 const client = mqtt.connect(MQTT_BROKER, {
     username: 'tu_usuario',
     password: 'tu_contraseña'
@@ -32,14 +34,24 @@ client.on("message", (topic, message) => {
         console.error("Error al parsear el mensaje:", e);
         return;
     }
-
-    // console.log("Datos recibidos:", data);
+    console.log("calidad:", data.quality);
+    console.log("umbral:", qualityThreshold);
+    if (data.quality < qualityThreshold) {
+        console.warn(`Ubicación descartada: calidad (${data.quality}%) inferior al umbral (${qualityThreshold}%)`);
+        return;
+    }
     window.updatePoints([data]); // Pasamos un array como esperas
 });
 
 client.on("error", (err) => {
     console.error(" Error en MQTT:", err);
 });
+
+// Función para actualizar el umbral de calidad desde el control deslizante
+window.setQualityThreshold = function (newThreshold) {
+    qualityThreshold = newThreshold;
+    console.log(`Umbral de calidad actualizado a: ${qualityThreshold}%`);
+};
 
 window.updatePoints = function (newData) {
     newData.forEach(newPoint => {

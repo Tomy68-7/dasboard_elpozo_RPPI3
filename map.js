@@ -4,7 +4,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
     let scale = 60;
     let offsetX, offsetY;
-    const roomWidth = 7.66;
+    const roomWidth = 6.66;
     const roomHeight = 6.87;
     window.points = []; // Define points como global
     window.pointHistory = new Map(); // Define pointHistory como global
@@ -95,10 +95,10 @@ document.addEventListener("DOMContentLoaded", function () {
 
     function drawDoor() {
         ctx.fillStyle = "green";
-        ctx.fillRect(transformX(7.6) - 5, transformY(6.5) - 10, 10, 20);
+        ctx.fillRect(transformX(6.6) - 5, transformY(6.5) - 10, 10, 20);
         ctx.fillStyle = "black";
         ctx.font = "30px Arial";
-        ctx.fillText("Puerta", transformX(7.6) + 50, transformY(6.5));
+        ctx.fillText("Puerta", transformX(6.6) + 50, transformY(6.5));
     }
 
     function addToHistory(mac, x, y) {
@@ -160,8 +160,61 @@ document.addEventListener("DOMContentLoaded", function () {
         return start + (end - start) * t;
     }
 
+    async function fetchTrajectory(deviceId, from, to) {
+    const res = await fetch(`http://localhost:3000/api/trayectoria?device=${deviceId}&from=${from}&to=${to}`);
+    const data = await res.json();
+
+    // Si data es un array, ajusta las fechas de cada elemento
+    data.forEach(point => {
+        point.timestamp = new Date(point.timestamp);
+        point.timestamp.setHours(point.timestamp.getHours());
+    });
+
+    // console.log("Datos de trayectoria (con 2 horas añadidas):", data);
+    return data;
+}
+
+    async function getTrajectoryData(deviceId, from, to) {
+        try {
+            // Llamada a la función fetchTrajectory para obtener los datos
+            const trajectoryData = await fetchTrajectory(deviceId, from, to);
+
+            // Procesar los datos si es necesario (por ejemplo, filtrar, transformar, etc.)
+            const processedData = trajectoryData.map(point => ({
+                x: point.x,
+                y: point.y,
+                // Z: point.z,
+                timestamp: point.timestamp
+            }));
+
+            return processedData;
+        } catch (error) {
+            console.error("Error al obtener la trayectoria:", error);
+            return [];
+        }
+    }
+
+    async function drawTrajectory(deviceId, from, to) {
+        const trajectory = await getTrajectoryData(deviceId, from, to);
+        trajectory.forEach(point => {
+            // Dibujar cada punto de la trayectoria en el canvas
+            const transformedX = transformX(point.x);
+            const transformedY = transformY(point.y);
+            
+            ctx.fillStyle = "blue";
+            ctx.beginPath();
+            ctx.arc(transformedX, transformedY, 3, 0, Math.PI * 2);
+            ctx.fill();
+        });
+    }
+
+    // Exportar la función al objeto global (window)
+    window.drawTrajectory = drawTrajectory;
+
     window.updateCanvas = update;
 
     resizeCanvas();
     update();
 });
+
+

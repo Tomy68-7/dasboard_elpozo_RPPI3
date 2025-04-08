@@ -1,18 +1,105 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>RTLS Dashboard</title>
-</head>
-<body>
-    <canvas id="rtls-dashboard"></canvas>
-    <!-- Include the Paho MQTT library -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/paho-mqtt/1.1.0/mqttws31.min.js"></script>
-    <script src="https://unpkg.com/mqtt/dist/mqtt.min.js"></script>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>RTLS Dashboard</title>
+  <link rel="stylesheet" href="styles/styles.css"/>
 
-    <!-- Include your map.js script -->
-    <script src="/data.js"></script>
-    <script src="/map.js"></script>
-</body>
+  <!-- MQTT Libraries -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/paho-mqtt/1.1.0/mqttws31.min.js"></script>
+  <script src="https://unpkg.com/mqtt/dist/mqtt.min.js"></script>
+
+  <!-- Scripts -->
+  <script src="/data.js"></script>
+  <script src="/map.js"></script>
+</head>
+<!-- ... mismo <head> que antes ... -->
+
+    <body>
+        <!-- Canvas principal -->
+        <canvas id="rtls-dashboard"></canvas>
+      
+        <!-- Panel lateral derecho -->
+        <div id="side-panel">
+          <button id="toggle-panel">☰</button>
+          <div id="panel-content">
+
+            <h4>Historial por rango</h4>
+            <label for="start-time">Desde:</label>
+            <input type="datetime-local" id="start-time">
+
+            <label for="end-time">Hasta:</label>
+            <input type="datetime-local" id="end-time">
+
+            <!-- Selector de dispositivo actualizado -->
+            <label for="device-select">Seleccionar dispositivo(s):</label>
+            <select id="device-select" multiple>
+              <option value="08B0">08B0</option>
+              <option value="D333">D333</option>
+            </select>
+
+            <!-- Botón para ver trayectoria -->
+            <button onclick="handleFetchTrajectory()">Ver trayectoria</button>
+            
+            <h3>Consultas</h3>
+      
+            <!-- Control de calidad dentro del panel -->
+            <div id="quality-control">
+              <label for="quality-range">Calidad mínima (%):</label>
+              <input 
+                type="range" 
+                id="quality-range" 
+                min="0" 
+                max="100" 
+                value="50" 
+                step="4" 
+                oninput="updateQualityThreshold(this.value)">
+              <span id="quality-value">50</span>%
+            </div>
+      
+            <!-- Info del dispositivo -->
+            <div id="device-info"></div>
+          </div>
+        </div>
+      
+        <!-- Scripts -->
+        <script>
+          function updateQualityThreshold(value) {
+            document.getElementById('quality-value').textContent = value;
+            window.setQualityThreshold(Number(value)); // Función definida en data.js
+          }
+      
+            document.getElementById('toggle-panel').addEventListener('click', () => {
+            document.getElementById('side-panel').classList.toggle('open');
+          });
+
+          function formatDateForPostgres(datetimeLocalValue) {
+          // Convierte '2025-04-08T10:19' a '2025-04-08 10:19:00'
+          return datetimeLocalValue.replace("T", " ") + ":00";
+      }
+
+          async function handleFetchTrajectory() {
+            const deviceSelect = document.getElementById("device-select");
+            const selectedDevices = Array.from(deviceSelect.selectedOptions).map(option => option.value);
+            const fromRaw = document.getElementById("start-time").value;
+            const toRaw = document.getElementById("end-time").value;
+            const from = formatDateForPostgres(fromRaw);
+            const to = formatDateForPostgres(toRaw);
+
+            if (selectedDevices.length === 0 || !from || !to) {
+              alert("Por favor, selecciona al menos un dispositivo y un rango de tiempo válido.");
+              return;
+            }
+
+            try {
+              for (const deviceId of selectedDevices) {
+                window.drawTrajectory(deviceId, from, to); // Llama directamente a la función para dibujar la trayectoria
+              }
+            } catch (error) {
+              console.error("Error al obtener la trayectoria:", error);
+            }
+          }
+        </script>
+      </body>
 </html>
