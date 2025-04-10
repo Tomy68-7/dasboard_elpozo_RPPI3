@@ -47,6 +47,8 @@ body {
   
   #panel-content {
     padding: 20px;
+    overflow-y: auto; /* Habilita el scroll vertical */
+    height: 100%;
     display: flex;
     flex-direction: column;
     gap: 15px;
