@@ -90,5 +90,68 @@ body {
 
     z-index: 10; /* Asegúrate de que sea mayor que otros elementos */
 }
-  
-  
+
+.collapsible-section {
+  margin-top: 20px;
+}
+
+.collapsible-button {
+  background-color: #007bff;
+  color: white;
+  border: none;
+  padding: 10px;
+  width: 100%;
+  text-align: left;
+  cursor: pointer;
+  font-size: 16px;
+  border-radius: 5px;
+}
+
+.collapsible-button:hover {
+  background-color: #0056b3;
+}
+
+.collapsible-content {
+  display: none; /* Oculto por defecto */
+  padding: 10px;
+  border: 1px solid #ddd;
+  border-top: none;
+  max-height: 200px; /* Limita la altura máxima */
+  overflow-y: auto; /* Habilita el scroll si hay demasiados mensajes */
+  background-color: #f9f9f9;
+}
+
+#discarded-list li {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 5px 0;
+}
+
+#discarded-list button {
+    background-color: transparent;
+    border: none;
+    color: red;
+    font-size: 14px;
+    cursor: pointer;
+}
+
+#discarded-list button:hover {
+    color: darkred;
+}
+
+#clear-all-discarded {
+    background-color: #dc3545;
+    color: white;
+    border: none;
+    padding: 5px 10px;
+    margin-bottom: 10px;
+    cursor: pointer;
+    border-radius: 5px;
+    font-size: 14px;
+}
+
+#clear-all-discarded:hover {
+    background-color: #c82333;
+}
+

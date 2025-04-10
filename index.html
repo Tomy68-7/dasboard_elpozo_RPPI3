@@ -36,8 +36,7 @@
 
       <label for="device-select">Seleccionar dispositivo(s):</label>
       <select id="device-select" multiple>
-        <option value="08B0">08B0</option>
-        <option value="D333">D333</option>
+       
       </select>
 
       <button onclick="handleFetchTrajectory()">Ver trayectoria</button>
@@ -58,6 +57,14 @@
         <span id="quality-value">50</span>%
       </div>
 
+      <div id="discarded-messages" class="collapsible-section">
+        <button class="collapsible-button" onclick="toggleDiscardedMessages()">Mensajes descartados ▼</button>
+        <div id="discarded-content" class="collapsible-content">
+          <button id="clear-all-discarded" onclick="clearAllDiscardedMessages()">Eliminar todos</button>
+          <ul id="discarded-list"></ul>
+        </div>
+      </div>
+
       <div id="device-info"></div>
     </div>
   </div>
@@ -66,7 +73,8 @@
   <script>
     function updateQualityThreshold(value) {
       document.getElementById('quality-value').textContent = value;
-      window.setQualityThreshold(Number(value));
+      setQualityThreshold(Number(value));
+      clearDiscardedMessages(); // Limpia los mensajes descartados
     }
 
     document.getElementById('toggle-panel').addEventListener('click', () => {
@@ -109,6 +117,61 @@
       trajectoryCanvas.style.zIndex = 0;
       console.log("Stopped watching the trajectory.");
     }
+
+    // Nueva función para el acordeón
+  function toggleDiscardedMessages() {
+    const content = document.getElementById("discarded-content");
+    const button = document.querySelector("#discarded-messages .collapsible-button");
+
+    if (content.style.display === "none" || !content.style.display) {
+      content.style.display = "block";
+      button.textContent = "Mensajes descartados ▲";
+    } else {
+      content.style.display = "none";
+      button.textContent = "Mensajes descartados ▼";
+    }
+  }
+
+  function clearDiscardedMessages() {
+    const discardedList = document.getElementById("discarded-list");
+    discardedList.innerHTML = ""; // Limpia todo el contenido de la lista
+    console.log("Mensajes descartados limpiados.");
+}
+
+function addDiscardedMessage(message) {
+    const discardedList = document.getElementById("discarded-list");
+    const listItem = document.createElement("li");
+
+    // Crear el texto del mensaje
+    const messageText = document.createElement("span");
+    messageText.textContent = message;
+
+    // Crear el botón de eliminación
+    const deleteButton = document.createElement("button");
+    deleteButton.textContent = "❌";
+    deleteButton.style.marginLeft = "10px";
+    deleteButton.style.cursor = "pointer";
+    deleteButton.onclick = () => {
+        discardedList.removeChild(listItem); // Elimina el mensaje de la lista
+    };
+
+    // Añadir el texto y el botón al elemento de la lista
+    listItem.appendChild(messageText);
+    listItem.appendChild(deleteButton);
+
+    // Añadir el elemento a la lista
+    discardedList.appendChild(listItem);
+
+    // Limitar el número de mensajes mostrados (opcional)
+    if (discardedList.children.length > 10) {
+        discardedList.removeChild(discardedList.firstChild);
+    }
+}
+function clearAllDiscardedMessages() {
+    const discardedList = document.getElementById("discarded-list");
+    discardedList.innerHTML = ""; // Limpia todo el contenido de la lista
+    console.log("Todos los mensajes descartados han sido eliminados.");
+}
   </script>
 </body>
 </html>

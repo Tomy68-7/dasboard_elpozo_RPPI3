@@ -33,14 +33,19 @@ client.on("message", (topic, message) => {
     } catch (e) {
         console.error("Error al parsear el mensaje:", e);
         return;
-    }
+    } 
+    updateDeviceSelect(data.dispositivo);
     console.log("calidad:", data.quality);
     console.log("umbral:", qualityThreshold);
     if (data.quality < qualityThreshold) {
-        console.warn(`Ubicación descartada: calidad (${data.quality}%) inferior al umbral (${qualityThreshold}%)`);
+        const warningMessage = `Ubicación descartada (${data.dispositivo}): calidad (${data.quality}%) inferior al umbral (${qualityThreshold}%)`;
+        console.warn(warningMessage);
+        addDiscardedMessage(warningMessage);
         return;
     }
     window.updatePoints([data]); // Pasamos un array como esperas
+     // Actualizar dinámicamente el select de dispositivos
+    
 });
 
 client.on("error", (err) => {
@@ -68,3 +73,31 @@ window.updatePoints = function (newData) {
     // console.log("Estado actualizado de points:", window.points);
     window.updateCanvas(); // Esto llama al render del canvas
 };
+
+// Función para actualizar el select de dispositivos
+function updateDeviceSelect(mac) {
+    const deviceSelect = document.getElementById("device-select");
+    const existingOption = Array.from(deviceSelect.options).find(option => option.value === mac);
+
+    if (!existingOption) {
+        const newOption = document.createElement("option");
+        newOption.value = mac;
+        newOption.textContent = mac;
+        deviceSelect.appendChild(newOption);
+        console.log(`Dispositivo agregado al select: ${mac}`);
+    }
+}
+
+// Función para agregar mensajes descartados al contenedor
+function addDiscardedMessage(message) {
+    const discardedList = document.getElementById("discarded-list");
+    const listItem = document.createElement("li");
+    listItem.textContent = message;
+    discardedList.appendChild(listItem);
+
+    // Limitar el número de mensajes mostrados (opcional)
+    if (discardedList.children.length > 10) {
+        discardedList.removeChild(discardedList.firstChild);
+    }
+}
+
