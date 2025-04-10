@@ -44,8 +44,7 @@ app.get('/api/trayectoria', async (req, res) => {
       const result = await pool.query(`
         SELECT 
           ST_X(ubicacion) AS x,
-          ST_Y(ubicacion) AS y, //NO TIENE EN CUENTA LA CALIDAD
-          ST_Z(ubicacion) AS z,
+          ST_Y(ubicacion) AS y,
           timestamp 
         FROM ubicaciones
         WHERE dispositivos_id = $1 AND timestamp BETWEEN $2 AND $3

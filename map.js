@@ -1,25 +1,38 @@
+// map.js completo adaptado para 2 canvas
+
 document.addEventListener("DOMContentLoaded", function () {
-    const canvas = document.getElementById("rtls-dashboard");
-    const ctx = canvas.getContext("2d");
+    const realtimeCanvas = document.getElementById("rtls-dashboard");
+    const trajectoryCanvas = document.getElementById("trajectory-layer");
+    const ctxRealtime = realtimeCanvas.getContext("2d");
+    const ctxTrajectory = trajectoryCanvas.getContext("2d");
+
+    console.log(ctxTrajectory);
 
     let scale = 60;
     let offsetX, offsetY;
     const roomWidth = 6.66;
     const roomHeight = 6.87;
-    window.points = []; // Define points como global
-    window.pointHistory = new Map(); // Define pointHistory como global
+    window.points = [];
+    window.pointHistory = new Map();
 
     function resizeCanvas() {
-        canvas.width = window.innerWidth;
-        canvas.height = window.innerHeight;
-        offsetX = canvas.width / 17;
-        offsetY = canvas.height / 1.1;
+        const width = window.innerWidth;
+        const height = window.innerHeight;
 
-        let scaleX = canvas.width / (roomWidth * 1.2);
-        let scaleY = canvas.height / (roomHeight * 1.2);
+        [realtimeCanvas, trajectoryCanvas].forEach(canvas => {
+            canvas.width = width;
+            canvas.height = height;
+        });
+
+        offsetX = width / 17;
+        offsetY = height / 1.1;
+
+        let scaleX = width / (roomWidth * 1.2);
+        let scaleY = height / (roomHeight * 1.2);
         scale = Math.min(scaleX, scaleY);
 
-        drawStaticElements();
+
+        drawStaticElements(ctxTrajectory); // Solo en la capa de trayectoria
     }
 
     window.addEventListener("resize", resizeCanvas);
@@ -32,73 +45,83 @@ document.addEventListener("DOMContentLoaded", function () {
         return (-y * scale) + offsetY;
     }
 
-    function drawStaticElements() {
-        ctx.fillStyle = "#ffffff";
-        ctx.fillRect(0, 0, canvas.width, canvas.height);
+    function drawStaticElements(ctxRealtime) {
+        ctxRealtime.clearRect(0, 0, realtimeCanvas.width, realtimeCanvas.height);
+        // ctxRealtime.fillStyle = "#ffffff";
+        // ctxRealtime.fillRect(0, 0, realtimeCanvas.width, realtimeCanvas.height);
 
-        drawGrid();
-        drawAxes();
-        drawLabels();
-        drawRoom();
-        drawDoor();
+        drawGrid(ctxRealtime);
+        drawAxes(ctxRealtime);
+        drawLabels(ctxRealtime);
+        drawRoom(ctxRealtime);
+        drawDoor(ctxRealtime);
     }
 
-    function drawGrid() {
-        ctx.strokeStyle = "lightgray";
-        ctx.lineWidth = 1;
-        ctx.beginPath();
+    function drawStaticTrajectoryElements(ctx) {
+        
+        drawGrid(ctxTrajectory);
+        drawAxes(ctxTrajectory);
+        drawLabels(ctxTrajectory);
+        drawRoom(ctxTrajectory);
+        drawDoor(ctxTrajectory);
+    }
+
+    function drawGrid(ctxRealtime) {
+        ctxRealtime.strokeStyle = "lightgray";
+        ctxRealtime.lineWidth = 1;
+        ctxRealtime.beginPath();
 
         let step = 0.5 * scale;
-        for (let x = offsetX % step; x < canvas.width; x += step) {
-            ctx.moveTo(x, 0);
-            ctx.lineTo(x, canvas.height);
+        for (let x = offsetX % step; x < realtimeCanvas.width; x += step) {
+            ctxRealtime.moveTo(x, 0);
+            ctxRealtime.lineTo(x, realtimeCanvas.height);
         }
-        for (let y = offsetY % step; y < canvas.height; y += step) {
-            ctx.moveTo(0, y);
-            ctx.lineTo(canvas.width, y);
+        for (let y = offsetY % step; y < realtimeCanvas.height; y += step) {
+            ctxRealtime.moveTo(0, y);
+            ctxRealtime.lineTo(realtimeCanvas.width, y);
         }
-        ctx.stroke();
+        ctxRealtime.stroke();
     }
 
-    function drawAxes() {
-        ctx.strokeStyle = "black";
-        ctx.lineWidth = 2;
-        ctx.beginPath();
-        ctx.moveTo(0, transformY(0));
-        ctx.lineTo(canvas.width, transformY(0));
-        ctx.moveTo(transformX(0), 0);
-        ctx.lineTo(transformX(0), canvas.height);
-        ctx.stroke();
+    function drawAxes(ctx) {
+        ctxRealtime.strokeStyle = "black";
+        ctxRealtime.lineWidth = 3;
+        ctxRealtime.beginPath();
+        ctxRealtime.moveTo(0, transformY(0));
+        ctxRealtime.lineTo(realtimeCanvas.width, transformY(0));
+        ctxRealtime.moveTo(transformX(0), 0);
+        ctxRealtime.lineTo(transformX(0), realtimeCanvas.height);
+        ctxRealtime.stroke();
     }
 
-    function drawLabels() {
-        ctx.fillStyle = "black";
-        ctx.font = "12px Arial";
-        ctx.textAlign = "center";
-        ctx.textBaseline = "middle";
+    function drawLabels(ctx) {
+        ctxRealtime.fillStyle = "black";
+        ctxRealtime.font = "12px Arial";
+        ctxRealtime.textAlign = "center";
+        ctxRealtime.textBaseline = "middle";
         let step = scale;
-        for (let x = offsetX % step; x < canvas.width; x += step) {
+        for (let x = offsetX % step; x < realtimeCanvas.width; x += step) {
             let worldX = Math.round((x - offsetX) / scale);
-            ctx.fillText(worldX + "m", x, transformY(0) + 15);
+            ctxRealtime.fillText(worldX + "m", x, transformY(0) + 15);
         }
-        for (let y = offsetY % step; y < canvas.height; y += step) {
+        for (let y = offsetY % step; y < realtimeCanvas.height; y += step) {
             let worldY = Math.round((offsetY - y) / scale);
-            ctx.fillText(worldY + "m", transformX(0) - 20, y);
+            ctxRealtime.fillText(worldY + "m", transformX(0) - 20, y);
         }
     }
 
-    function drawRoom() {
-        ctx.strokeStyle = "blue";
-        ctx.lineWidth = 3;
-        ctx.strokeRect(transformX(0), transformY(0) - (roomHeight * scale), roomWidth * scale, roomHeight * scale);
+    function drawRoom(ctxRealtime) {
+        ctxRealtime.strokeStyle = "blue";
+        ctxRealtime.lineWidth = 3;
+        ctxRealtime.strokeRect(transformX(0), transformY(0) - (roomHeight * scale), roomWidth * scale, roomHeight * scale);
     }
 
-    function drawDoor() {
-        ctx.fillStyle = "green";
-        ctx.fillRect(transformX(6.6) - 5, transformY(6.5) - 10, 10, 20);
-        ctx.fillStyle = "black";
-        ctx.font = "30px Arial";
-        ctx.fillText("Puerta", transformX(6.6) + 50, transformY(6.5));
+    function drawDoor(ctxRealtime) {
+        ctxRealtime.fillStyle = "green";
+        ctxRealtime.fillRect(transformX(6.6) - 5, transformY(6.5) - 10, 10, 20);
+        ctxRealtime.fillStyle = "black";
+        ctxRealtime.font = "30px Arial";
+        // ctxRealtime.fillText("Puerta", transformX(6.6) + 50, transformY(6.5));
     }
 
     function addToHistory(mac, x, y) {
@@ -122,7 +145,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
                 let history = window.pointHistory.get(mac);
                 if (history.progress < 1) {
-                    history.progress += 0.001; // Reducir el incremento para una interpolación más suave
+                    history.progress += 0.001;
                     if (history.progress > 1) history.progress = 1;
                 }
 
@@ -135,23 +158,22 @@ document.addEventListener("DOMContentLoaded", function () {
                 let transformedX = transformX(interpolatedX);
                 let transformedY = transformY(interpolatedY);
 
-                ctx.fillStyle = "red";
-                ctx.beginPath();
-                ctx.arc(transformedX, transformedY, 5, 0, Math.PI * 2);
-                ctx.fill();
 
-                ctx.fillStyle = "black";
-                ctx.font = "10px Arial";
-                ctx.fillText(`MAC: ${mac}`, transformedX + 10, transformedY - 10);
-            } else {
-                console.log(`Punto fuera de la habitación: ${mac} en (${x}, ${y})`);
+                ctxRealtime.fillStyle = "red";
+                ctxRealtime.beginPath();
+                ctxRealtime.arc(transformedX, transformedY, 5, 0, Math.PI * 2);
+                ctxRealtime.fill();
+
+                ctxRealtime.fillStyle = "black";
+                ctxRealtime.font = "10px Arial";
+                ctxRealtime.fillText(`MAC: ${mac}`, transformedX + 10, transformedY - 10);
             }
         });
     }
 
     function update() {
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-        drawStaticElements();
+        ctxRealtime.clearRect(0, 0, realtimeCanvas.width, realtimeCanvas.height);
+        drawStaticElements(ctxRealtime); // opcional, si querés superponer guías
         drawPoints();
         requestAnimationFrame(update);
     }
@@ -161,33 +183,21 @@ document.addEventListener("DOMContentLoaded", function () {
     }
 
     async function fetchTrajectory(deviceId, from, to) {
-    const res = await fetch(`http://localhost:3000/api/trayectoria?device=${deviceId}&from=${from}&to=${to}`);
-    const data = await res.json();
-
-    // Si data es un array, ajusta las fechas de cada elemento
-    data.forEach(point => {
-        point.timestamp = new Date(point.timestamp);
-        point.timestamp.setHours(point.timestamp.getHours());
-    });
-
-    // console.log("Datos de trayectoria (con 2 horas añadidas):", data);
-    return data;
-}
+        const res = await fetch(`http://localhost:3000/api/trayectoria?device=${deviceId}&from=${from}&to=${to}`);
+        const data = await res.json();
+        return data;
+    }
 
     async function getTrajectoryData(deviceId, from, to) {
         try {
-            // Llamada a la función fetchTrajectory para obtener los datos
             const trajectoryData = await fetchTrajectory(deviceId, from, to);
 
-            // Procesar los datos si es necesario (por ejemplo, filtrar, transformar, etc.)
-            const processedData = trajectoryData.map(point => ({
+            return trajectoryData.map(point => ({
                 x: point.x,
                 y: point.y,
-                // Z: point.z,
-                timestamp: point.timestamp
+                timestamp: new Date(point.timestamp)
+                
             }));
-
-            return processedData;
         } catch (error) {
             console.error("Error al obtener la trayectoria:", error);
             return [];
@@ -195,26 +205,42 @@ document.addEventListener("DOMContentLoaded", function () {
     }
 
     async function drawTrajectory(deviceId, from, to) {
+        // Limpiar el canvas de trayectoria antes de dibujar
+        ctxTrajectory.clearRect(0, 0, trajectoryCanvas.width, trajectoryCanvas.height);
+
+        trajectoryCanvas.style.zIndex = 2;
+
+        const rect = trajectoryCanvas.getBoundingClientRect();
+
         const trajectory = await getTrajectoryData(deviceId, from, to);
+
         trajectory.forEach(point => {
-            // Dibujar cada punto de la trayectoria en el canvas
-            const transformedX = transformX(point.x);
-            const transformedY = transformY(point.y);
-            
-            ctx.fillStyle = "blue";
-            ctx.beginPath();
-            ctx.arc(transformedX, transformedY, 3, 0, Math.PI * 2);
-            ctx.fill();
+            // console.log(`Coordenadas originales: x=${point.x}, y=${point.y}`); // Mostrar valores originales
+            const x = transformX(point.x);
+            const y = transformY(point.y);
+            // console.log(`Coordenadas transformadas: x=${x}, y=${y}`); // Mostrar valores transformados
+
+            // Verificar si las coordenadas transformadas están dentro del canvas
+            if (x >= 0 && x <= trajectoryCanvas.width && y >= 0 && y <= trajectoryCanvas.height) {
+                ctxTrajectory.fillStyle = "blue"; // Cambia a un color llamativo
+                ctxTrajectory.beginPath();
+                ctxTrajectory.arc(x, y, 5, 0, Math.PI * 2); // Aumenta el radio para hacerlo más visible
+                ctxTrajectory.fill();
+            } else {
+                console.warn(`Coordenadas fuera del canvas: x=${x}, y=${y}`);
+            }
         });
+
+        
     }
 
-    // Exportar la función al objeto global (window)
     window.drawTrajectory = drawTrajectory;
-
+    window.drawStaticElements = drawStaticElements;
+    window.drawStaticTrajectoryElements = drawStaticTrajectoryElements;
     window.updateCanvas = update;
 
     resizeCanvas();
     update();
+
+    
 });
-
-
